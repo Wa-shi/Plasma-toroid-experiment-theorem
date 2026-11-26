@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th" data-lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plasma Toroid Lab</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root {
+  /* a LaTeX article on a desk: white page, black ink, hyperref blue links; side rails hold contents (left) and the live simulation (right) */
+  --desk: #e8e8e6; --page: #ffffff; --ink: #141414; --muted: #5a5a5a; --rule: #1d1d1d; --hair: #d9d9d9; --link: #1d4f9a;
+  --serif: "LM Roman", "Plex Thai", "Latin Modern Roman", "IBM Plex Sans Thai", serif;
+  --mono: "LM Mono", "Plex Thai", "Latin Modern Mono", ui-monospace, monospace;
+  --pagew: 860px; --railw: 230px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--desk); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { margin: 0; color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.78; background: var(--desk); }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* three columns, symmetric around the page */
+.layout { display: grid; grid-template-columns: var(--railw) minmax(0, var(--pagew)) var(--railw); gap: 28px; justify-content: center; padding: 28px max(16px, env(safe-area-inset-right)) 60px max(16px, env(safe-area-inset-left)); }
+.rail { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow: auto; font-size: 14px; line-height: 1.55; }
+.rail h4 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px; color: var(--muted); font-weight: 400; }
+.rail .box { background: var(--page); border: 1px solid var(--hair); padding: 14px 16px; }
+#toc ol { list-style: none; padding: 0; margin: 0; counter-reset: none; }
+#toc li { margin: 2px 0; }
+#toc li li { padding-left: 14px; font-size: 13px; }
+#toc a { color: var(--ink); display: block; padding: 1px 6px; border-left: 2px solid transparent; }
+#toc a.on { border-left-color: var(--link); color: var(--link); }
+.ctl { display: grid; gap: 8px; }
+.ctl label { display: grid; gap: 2px; color: var(--muted); font-size: 13px; }
+.ctl .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+button, select { font: inherit; font-size: 14px; color: var(--ink); background: #fff; border: 1px solid #9a9a9a; border-radius: 3px; padding: 4px 10px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--ink); }
+button.primary { border-color: var(--link); color: var(--link); }
+input[type=range] { accent-color: var(--link); width: 100%; }
+.mini { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mini td { padding: 1px 0; border-bottom: 1px solid #eee; }
+.mini td.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.busy { color: #8a5a00; font-size: 13px; min-height: 1.2em; }
+
+/* the page */
+.paper { background: var(--page); padding: clamp(28px, 6vw, 64px) clamp(18px, 6.5vw, 72px) clamp(36px, 6vw, 72px); box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 8px 28px rgba(0,0,0,0.06); counter-reset: fig tab; }
+.title { text-align: center; margin-bottom: 30px; }
+.title h1 .sub { display: block; font-size: 0.72em; font-weight: 500; margin-top: 0.35em; line-height: 1.35; }
+.title h1 { font-size: 26px; font-weight: 700; line-height: 1.35; margin: 0 0 12px; text-wrap: balance; }
+.title .who { font-size: 16px; }
+.title .date { font-size: 15px; color: var(--muted); }
+.abstract { margin: 26px 34px 30px; font-size: 15.5px; line-height: 1.75; }
+.abstract h3 { text-align: center; font-size: 15.5px; margin: 0 0 6px; }
+h2 { font-size: 21px; font-weight: 700; margin: 2.3em 0 0.7em; line-height: 1.35; text-wrap: balance; }
+h3 { font-size: 17.5px; font-weight: 700; margin: 1.8em 0 0.5em; line-height: 1.4; }
+h2 .sn, h3 .sn { margin-right: 0.8em; }
+p { margin: 0 0 0.95em; text-align: left; hyphens: auto; }
+.eq { margin: 1.15em 0 1.3em; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+mjx-container[jax="SVG"][display="true"] { margin: 0 !important; }
+mjx-container:not([display]) { padding: 0 1px; }
+.v { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cite { white-space: nowrap; cursor: pointer; }
+figure { margin: 1.8em 0 1.9em; }
+figure .frame { border: 1px solid var(--hair); background: #fff; }
+figcaption { font-size: 15px; line-height: 1.65; margin-top: 0.7em; }
+figcaption b { font-weight: 700; margin-right: 0.4em; }
+.figctl { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 14px; margin: 0 0 8px; }
+.figctl label { display: flex; gap: 5px; align-items: center; }
+.figctl input[type=range] { width: 130px; }
+canvas { display: block; width: 100%; }
+#schem { display: block; width: 100%; height: auto; }
+#three { width: 100%; height: clamp(300px, 72vw, 520px); background: #f7f7f5; touch-action: none; }
+.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scrollx > svg { min-width: 680px; }
+.swipe { display: none; font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.mtoc { display: none; margin: 0 0 24px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 6px 0; font-size: 15px; }
+.mtoc summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.mtoc ol { list-style: none; padding: 0 0 0 4px; margin: 6px 0 4px; }
+.mtoc li li { padding-left: 16px; font-size: 14px; }
+.mtoc a { color: var(--ink); display: block; padding: 3px 0; }
+.twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+table.bt { border-collapse: collapse; width: 100%; font-size: 15px; line-height: 1.5; border-top: 1.6px solid var(--rule); border-bottom: 1.6px solid var(--rule); }
+table.bt th { text-align: left; font-weight: 700; padding: 5px 6px; border-bottom: 0.8px solid var(--rule); }
+table.bt td { padding: 3px 6px; vertical-align: top; }
+table.bt td.n, table.bt th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.bt tr.mid td { border-top: 0.8px solid var(--rule); }
+.tcap { font-size: 15px; margin: 0 0 6px; line-height: 1.6; }
+.tcap b { margin-right: 0.4em; }
+.params { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; font-size: 14.5px; }
+.params label { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: baseline; }
+.params input { grid-column: 1 / -1; }
+.params output { font-family: var(--mono); }
+.refs { font-size: 15px; line-height: 1.65; padding-left: 2.2em; }
+.refs li { margin-bottom: 0.45em; }
+.note { color: var(--muted); font-size: 14.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13.5px; color: var(--muted); padding: 6px 2px 0; }
+.sw { display: inline-block; width: 11px; height: 11px; margin-right: 5px; vertical-align: -1px; }
+/* reference card */
+#refcard { position: fixed; inset: 0; background: rgba(20,20,20,0.35); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+#refcard.on { display: flex; }
+#refcard .card { background: #fff; max-width: 560px; width: 100%; padding: 22px 26px; border: 1px solid var(--hair); box-shadow: 0 12px 40px rgba(0,0,0,0.2); font-size: 15.5px; line-height: 1.65; }
+#refcard .card h4 { margin: 0 0 8px; font-size: 17px; }
+#refcard .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#refcard code { font-family: var(--mono); font-size: 12.5px; word-break: break-all; background: #f3f3f1; padding: 2px 4px; }
+
+/* language switch: every bilingual element carries lang="th" or lang="en"; the root html is never matched */
+html[data-lang="en"] body [lang="th"], html[data-lang="th"] body [lang="en"] { display: none !important; }
+.title .pw { font-size: 14px; color: var(--muted); letter-spacing: 0.02em; margin: 2px 0 4px; }
+.langsw { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #9a9a9a; border-radius: 3px; overflow: hidden; }
+.langsw button { border: 0; border-radius: 0; padding: 4px 10px; }
+.langsw button.on { background: var(--ink); color: #fff; }
+#donut { width: 100%; height: clamp(300px, 70vw, 520px); background: #f7f7f5; touch-action: none; position: relative; }
+.figctl select { max-width: 9em; }
+
+/* schematic viewer */
+.shtabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.shtabs button { white-space: nowrap; flex: none; font-size: 13.5px; padding: 4px 10px; border-radius: 14px; }
+.shtabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.schctl { margin-top: 4px; }
+.schframe { position: relative; padding: 0; background: #F5F4EF; overflow: hidden; }
+.schframe.dark { background: #282C34; }
+#schem { display: block; width: 100%; height: 420px; cursor: grab; user-select: none; -webkit-user-select: none; }
+#schem:active { cursor: grabbing; }
+.schtip { position: absolute; display: none; max-width: 230px; background: rgba(255,255,255,0.96); border: 1px solid #9a9a9a; border-radius: 4px; padding: 6px 8px; font-size: 13px; line-height: 1.45; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.12); z-index: 3; }
+.schtip.on { display: block; }
+.schframe.dark .schtip { background: rgba(40,44,52,0.96); color: #dcdfe4; border-color: #5c6370; }
+.zoombar { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; }
+.zoombar button { padding: 2px 9px; min-width: 30px; background: rgba(255,255,255,0.9); }
+.shname { position: absolute; left: 10px; bottom: 6px; font-size: 12.5px; color: #555; background: rgba(245,244,239,0.85); padding: 1px 6px; border-radius: 3px; }
+.schframe.dark .shname { color: #abb2bf; background: rgba(40,44,52,0.85); }
+.vbar[hidden] { display: none; }
+.vbar { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+.vbar i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgb(44,95,184), rgb(120,140,120)); }
+.vbar i.p { background: linear-gradient(90deg, rgb(120,140,120), rgb(200,40,30)); }
+button.hold.on { background: #6b4bc4; color: #fff; border-color: #6b4bc4; }
+.title .pw { display: none; }
+.powered { margin-top: 2.4em; text-align: center; font-size: 13px; color: var(--muted); letter-spacing: 0.02em; }
+@media (max-width: 1360px) {
+  .layout { grid-template-columns: minmax(0, var(--pagew)); gap: 14px; padding-top: 0; }
+  .rail.left { display: none; }
+  .mtoc { display: block; }
+  h2, h3, figure, #refs li { scroll-margin-top: 96px; }
+  .rail.right { position: sticky; top: 0; z-index: 20; order: -1; max-height: none; overflow: visible; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); }
+  .rail.right .box { border-width: 0 0 1px; padding: 8px max(16px, env(safe-area-inset-left)) 8px; padding-top: max(8px, env(safe-area-inset-top)); background: rgba(255,255,255,0.96); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .rail.right .ctl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .rail.right .ctl label { display: flex; align-items: center; gap: 6px; }
+  .rail.right .row2 { display: flex; gap: 6px; }
+  .rail.right .mini, .rail.right h4 { display: none; }
+  .rail.right input[type=range] { width: 110px; }
+}
+@media (max-width: 760px) {
+  body { font-size: 16px; line-height: 1.8; }
+  .layout { padding-left: 0; padding-right: 0; padding-bottom: 0; }
+  .rail.right { margin: 0; }
+  .paper { box-shadow: none; }
+  .title h1 { font-size: 21px; }
+  .title .who, .title .date { font-size: 14px; }
+  .abstract { margin: 18px 0 22px; font-size: 15px; }
+  h2 { font-size: 19px; margin-top: 2em; }
+  h3 { font-size: 16.5px; }
+  .twocol, .params { grid-template-columns: 1fr; gap: 18px; }
+  table.bt { font-size: 14px; }
+  figcaption, .tcap { font-size: 14px; }
+  .eq { margin: 0.9em -2px 1.1em; }
+  .eq mjx-container[display="true"] { font-size: 92% !important; }
+  .swipe { display: block; }
+  .figctl { gap: 6px 12px; font-size: 13.5px; }
+  .figctl input[type=range] { width: 110px; }
+  .rail.right .ctl { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .rail.right .ctl > * { flex: 0 0 auto; }
+  .rail.right .busy { font-size: 12px; min-width: 9em; }
+  .langsw { grid-template-columns: auto auto; }
+  .title .pw { font-size: 13px; }
+  button, select { font-size: 14px; padding: 5px 9px; min-height: 34px; }
+  #refcard .card { padding: 18px 18px; font-size: 15px; }
+}
+@media (max-width: 430px) {
+  .eq mjx-container[display="true"] { font-size: 82% !important; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html { scroll-behavior: smooth; }
+</style>
+<script>
+try { const l = localStorage.getItem('ptlab-lang'); if (l === 'en' || l === 'th') { document.documentElement.dataset.lang = l; document.documentElement.lang = l; } } catch (e) {}
+window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], tags: 'all' }, svg: { fontCache: 'global' }, startup: { typeset: true } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script src="physics.js"></script>
+</head>
+<body>
+<div class="layout">
+<nav class="rail left" aria-label="contents"><div class="box" id="toc"><h4><span lang="th">สารบัญ</span><span lang="en">Contents</span></h4><ol id="tocl"></ol></div></nav>
+
+<article class="paper" id="paper">
+<header class="title">
+  <h1>Plasma Toroid Lab<span class="sub"><span lang="th">การจำลองวงจรขับ สนามแม่เหล็กไฟฟ้า และสมดุลพลังงานของวงแหวนพลาสมาซีนอน</span><span lang="en">Drive Circuit, Electromagnetic Fields and Energy Balance of a Xenon Plasma Ring</span></span></h1>
+  <div class="who">Watcharachai Leatsuriyakarn</div>
+  <div class="date">19 November 2026 · sky guided plasma toroid v2.3.0, Xe 15 torr</div>
+</header>
+
+<details class="mtoc" id="mtoc"><summary><span lang="th">สารบัญ</span><span lang="en">Contents</span></summary><ol id="mtocl"></ol></details>
+<section class="abstract" aria-label="abstract">
+  <h3><span lang="th">บทคัดย่อ</span><span lang="en">Abstract</span></h3>
+  <p id="abs">…</p>
+</section>
+
+<h2 id="s1"><span class="sn">1</span><span lang="th">บทนำ</span><span lang="en">Introduction</span></h2>
+<p lang="th">บอร์ด sky guided plasma toroid v2.3.0 ขับคอยล์บนแผ่น PCB ที่ความถี่ราว 10 MHz ใต้ลูกแก้วซีนอนขนาด 1 ลิตร ความดัน 15 torr เมื่อกำลังพอ แก๊สจะแตกตัวเป็นวงแหวนพลาสมาที่ทำหน้าที่เป็นขดทุติยภูมิรอบเดียวของหม้อแปลง <a class="cite" data-ref="piel" data-sec="11.3" data-page="391">[1, Sect. 11.3]</a> เอกสารนี้จำลองสามส่วนที่ต่อกันเป็นวง คือ วงจรขับ (หัวข้อ 2–3) สนามและแรงที่คอยล์สร้างบนวงแหวน (หัวข้อ 4–6) และพลาสมาซึ่งรับกำลังแล้วเปลี่ยนเป็นความร้อนและแสง (หัวข้อ 7–9) แล้วจบด้วยการทดลองสี่ชุดที่จะวัดค่าเหล่านี้จริง (หัวข้อ 10)</p>
+<p lang="en">The sky guided plasma toroid v2.3.0 board drives a printed coil at about 10 MHz under a 1 litre xenon globe filled to 15 torr. With enough power the gas breaks down into a plasma ring that acts as the single-turn secondary of a transformer <a class="cite" data-ref="piel" data-sec="11.3" data-page="391">[1, Sect. 11.3]</a>. This document simulates three coupled parts, namely the drive circuit (Sections 2–3), the fields and forces the coil produces on the ring (Sections 4–6), and the plasma that absorbs the power and turns it into heat and light (Sections 7–9). It closes with four experiments that will measure these quantities (Section 10).</p>
+<p lang="th">ทุกตัวเลขที่เป็นตัวพิมพ์ดีดในเนื้อหาคำนวณสดจากสถานะที่เลือกในแผงควบคุม ค่าที่ไม่ได้มาจากแผนวงจรหรือ README เป็นการประมาณ ปรับได้ในภาคผนวก A</p>
+<p lang="en">Every number set in typewriter type is computed live for the state chosen in the control panel. Values that do not come from the schematic or the README are estimates and can be changed in Appendix A.</p>
+
+<h2 id="s2"><span class="sn">2</span><span lang="th">วงจรขับและการไหลของกระแส</span><span lang="en">Drive circuit and current flow</span></h2>
+<p lang="th">แรงดัน 20 V จาก USB PD ผ่านวงจรจำกัดกระแส LMR14050 แล้วเข้าโช้ก L2 ไปยังโหนด drain ของ MOSFET Q1 และ Q2 ที่ต่อขนานกัน คอยล์ L100 ต่อจาก drain ไปยังโหนด hv แล้วผ่านชุดตัวเก็บประจุ C<sub>b</sub> = 132 pF ไปยังโหนด gate ซึ่งมี C16 = 5.6 nF ลงกราวด์ ตัวเก็บประจุสองตัวนี้เป็นตัวแบ่งแรงดันป้อนกลับ ทำให้วงจรสั่นเองได้แบบ Colpitts รูปที่ <a href="#fig1">1</a> แสดงกระแสในแต่ละกิ่งเป็นจุดที่วิ่งตามประจุจริง</p>
+<p lang="en">The 20 V USB PD supply passes the LMR14050 current limiter and the choke L2 to the drain node of the paralleled MOSFETs Q1 and Q2. The coil L100 runs from the drain to the hv node, then through the capacitor bank C<sub>b</sub> = 132 pF to the gate node, which has C16 = 5.6 nF to ground. These two capacitors form the feedback divider that makes the circuit oscillate on its own, as a Colpitts oscillator. Figure <a href="#fig1">1</a> shows the current in each branch as dots that move with the actual charge.</p>
+<figure id="fig1">
+  <div class="shtabs" id="shtabs" role="tablist" aria-label="schematic sheets"></div>
+  <div class="figctl schctl">
+    <label><input type="checkbox" id="cDots" checked> <span lang="th">จุดกระแส</span><span lang="en">current dots</span></label>
+    <label><input type="checkbox" id="cVolt"> <span lang="th">สีตามแรงดัน</span><span lang="en">colour by voltage</span></label>
+    <label><input type="checkbox" id="cVals"> <span lang="th">ค่ากระแสที่อุปกรณ์</span><span lang="en">current at each part</span></label>
+    <label><input type="checkbox" id="cDark"> <span lang="th">ธีมมืดแบบ KiCad</span><span lang="en">KiCad dark theme</span></label>
+    <label for="cMode"><span lang="th">กระแส</span><span lang="en">Current</span></label><select id="cMode"><option value="inst">instantaneous</option><option value="avg">average</option></select>
+  </div>
+  <div class="figctl schctl">
+    <label><span lang="th">ความเร็วจุด</span><span lang="en">dot speed</span> <input type="range" id="cSpd" min="1" max="20" value="6"><output id="cSpdV" class="v"></output></label>
+    <label><span lang="th">แสดงกระแสตั้งแต่</span><span lang="en">show currents from</span> <input type="range" id="cI0" min="0" max="100" value="40"><output id="cI0V" class="v"></output></label>
+    <label><span lang="th">ขนาดจุด</span><span lang="en">dot size</span> <input type="range" id="cSize" min="0.5" max="2" step="0.1" value="1"></label>
+  </div>
+  <div class="frame schframe" id="schframe">
+    <svg id="schem" role="img" aria-label="KiCad schematic of the toroid board with live current flow" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="schtip" id="schtip" role="status"></div>
+    <div class="zoombar"><button id="zin" aria-label="zoom in">+</button><button id="zout" aria-label="zoom out">−</button><button id="zfit" aria-label="fit"><span lang="th">พอดี</span><span lang="en">fit</span></button></div>
+    <div class="shname" id="shname"></div>
+  </div>
+  <div class="vbar" id="vbar" hidden><span>−1 kV</span><i></i><span>0</span><i class="p"></i><span>+1 kV</span></div>
+  <div class="figctl schctl">
+    <label>RV1 <input type="range" id="cRV1" min="0" max="10000" step="100" value="0"><output id="cRV1V" class="v"></output></label>
+    <label>RV2 bias <input type="range" id="cRV2" min="3.0" max="4.6" step="0.05" value="3.6"><output id="cRV2V" class="v"></output></label>
+    <button type="button" id="cSW2" class="hold"><span lang="th">กดค้าง SW2 จุดชนวน</span><span lang="en">hold SW2 strike</span></button>
+    <label><input type="checkbox" id="cOH"> <span lang="th">จำลองร้อนเกิน (D7)</span><span lang="en">simulate overheat (D7)</span></label>
+  </div>
+  <figcaption><b>Figure 1.</b> <span lang="th">แผนวงจรจริงของบอร์ด v2.3.0 จากไฟล์ KiCad <a class="cite" data-ref="sky">[5]</a> เลือกดูทั้งแผ่นหรือทีละบล็อกได้จากแถบด้านบน บนหน้าทั้งแผ่นแตะที่บล็อกเพื่อขยาย จุดสีส้มคือกระแสที่ไหลจริงในแต่ละช่วงสาย ความเร็วเป็นสัดส่วนกับ log ของขนาดกระแส แตะสายหรืออุปกรณ์เพื่อดูแรงดันและกระแส วงจรขับใช้ค่าจากการจำลองสด บล็อกไฟเลี้ยงและจำกัดกระแสใช้ค่าเฉลี่ยจากจุดทำงาน ส่วนจุดชนวนและไฟแสดงสนามแม่เหล็กเป็นภาพประกอบ เพราะไม่มีข้อมูลหม้อแปลง T1 และคอยล์ L101 RV1 และ RV2 ปรับแล้วจะคำนวณจุดทำงานใหม่</span><span lang="en">The board's own v2.3.0 schematic, drawn from its KiCad file <a class="cite" data-ref="sky">[5]</a>. Pick the full sheet or one block from the tabs; on the full sheet, tap a block to zoom in. Orange dots are the current in each wire segment, moving at a speed proportional to the log of its size. Tap a wire or a part to read its voltage and current. The driver uses the live simulation, the supply and current limit blocks use averages from the operating point, and the arc start and mag indicator are illustrative because there is no data for transformer T1 or pickup coil L101. Moving RV1 or RV2 recomputes the operating point.</span></figcaption>
+</figure>
+<figure id="fig2">
+  <div class="figctl" id="scopechk"></div>
+  <div class="frame"><canvas id="scope" height="330" data-ar="0.44" data-min="250" data-max="340" aria-label="scope traces"></canvas></div>
+  <figcaption><b>Figure 2.</b> <span lang="th">สัญญาณจากการจำลองสามรอบล่าสุด แต่ละช่องมีสเกลของตัวเอง แรงดัน drain เป็นพัลส์ครึ่งไซน์ยอดประมาณ 2.5 เท่าของ V<sub>drive</sub> ลักษณะของ class E ส่วนแรงดัน hv สูงหลายร้อยโวลต์ ซึ่งเป็นเหตุผลที่ใช้ตัวเก็บประจุทนแรงดัน 2 kV</span><span lang="en">The last three cycles of the simulation, each lane on its own scale. The drain voltage is a half-sine pulse peaking near 2.5 V<sub>drive</sub>, typical of class E, while the hv node swings several hundred volts, which is why the bank uses 2 kV capacitors.</span></figcaption>
+</figure>
+<div class="twocol">
+  <div><p class="tcap"><b>Table 1.</b> <span lang="th">ค่าทันที</span><span lang="en">Instantaneous values</span></p><table class="bt" id="inst"></table></div>
+  <div><p class="tcap"><b>Table 2.</b> <span lang="th">ค่าเฉลี่ยที่จุดทำงาน</span><span lang="en">Averages at the operating point</span></p><table class="bt" id="avgtab"></table></div>
+</div>
+<p class="note" id="circnote" style="margin-top:1em"></p>
+
+<h2 id="s3"><span class="sn">3</span><span lang="th">สมการสถานะและวิธีเชิงตัวเลข</span><span lang="en">State equations and numerical method</span></h2>
+<p lang="th">ให้ตัวแปรสถานะ $\mathbf y = (I_{L2}, V_d, I_1, I_p, V_{C_b}, V_g)$ กฎกระแสและกฎแรงดันของเคียร์ชอฟฟ์ให้ระบบสมการเชิงอนุพันธ์</p>
+<p lang="en">With the state vector $\mathbf y = (I_{L2}, V_d, I_1, I_p, V_{C_b}, V_g)$, Kirchhoff's current and voltage laws give the system</p>
+<div class="eq">$$\begin{aligned}
+L_2\,\dot I_{L2} &= V_{drive} - V_d - R_{L2} I_{L2}, & C_{oss}\,\dot V_d &= I_{L2} - I_1 - I_D(V_g,V_d),\\
+L_1\,\dot I_1 + M\,\dot I_p &= V_d - (V_{C_b}+V_g) - R_c I_1, & M\,\dot I_1 + L_p\,\dot I_p &= -R_p I_p,\\
+C_b\,\dot V_{C_b} &= I_1, & (C_{16}+C_{iss})\,\dot V_g &= I_1 - \frac{V_g - V_{bias}}{R_{13}} - I_{TVS}(V_g).
+\end{aligned}\label{eq:state}$$</div>
+<p lang="th">MOSFET ใช้แบบ square law $I_D = K_p (V_g - V_{th})^2$ จำกัดด้วย $R_{on}$ และมี body diode โหนด drain แข็งตัว (stiff) เพราะ $R_{on}C_{oss}$ อยู่ในระดับพิโควินาที จึงใช้กฎสี่เหลี่ยมคางหมูแบบ implicit แก้ด้วยวิธีของนิวตันทุกก้าว $\Delta t = 0.25$ ns</p>
+<p lang="en">The MOSFET follows a square law $I_D = K_p (V_g - V_{th})^2$ limited by $R_{on}$, with a body diode. The drain node is stiff because $R_{on}C_{oss}$ is of order picoseconds, so the implicit trapezoidal rule is used and solved by Newton's method at every step of $\Delta t = 0.25$ ns.</p>
+<div class="eq">$$\mathbf y_{n+1} = \mathbf y_n + \frac{\Delta t}{2}\Big[\mathbf f(\mathbf y_n) + \mathbf f(\mathbf y_{n+1})\Big]. \label{eq:trap}$$</div>
+
+<h2 id="s4"><span class="sn">4</span><span lang="th">สนามแม่เหล็กไฟฟ้ารอบคอยล์</span><span lang="en">Electromagnetic field around the coil</span></h2>
+<h3 id="s41"><span class="sn">4.1</span><span lang="th">กฎของฟาราเดย์และห่วงกระแส</span><span lang="en">Faraday's law and current loops</span></h3>
+<p lang="th">สนามไฟฟ้าที่ขับกระแสในพลาสมาเกิดจากฟลักซ์แม่เหล็กที่เปลี่ยนตามเวลา เมื่อทุกอย่างสมมาตรรอบแกน สนามมีเฉพาะองค์ประกอบ $E_\varphi$</p>
+<p lang="en">The electric field that drives the plasma current comes from the time-varying magnetic flux. With everything symmetric about the axis, only the $E_\varphi$ component survives.</p>
+<div class="eq">$$\oint_C \mathbf E\cdot d\mathbf l = -\frac{d}{dt}\int_S \mathbf B\cdot d\mathbf A \quad\Longrightarrow\quad E_\varphi(r,z) = -\frac{1}{2\pi r}\frac{\partial \Phi}{\partial t} = -\frac{\partial A_\varphi}{\partial t}, \label{eq:faraday}$$</div>
+<p lang="th">โดยฟลักซ์ผ่านวงกลมรัศมี $r$ คือ</p>
+<p lang="en">where the flux through a circle of radius $r$ is</p>
+<div class="eq">$$\Phi(r,z) = \int_0^r 2\pi r' B_z(r',z)\,dr'. \label{eq:flux}$$</div>
+<p lang="th">ห่วงกระแสรัศมี $a$ ที่ความสูง $z_0$ มีศักย์เวกเตอร์ในรูปปิดผ่าน complete elliptic integrals $K(m)$ และ $E(m)$ ซึ่งได้จากการอินทิเกรตกฎของ Biot–Savart รอบห่วง</p>
+<p lang="en">A current loop of radius $a$ at height $z_0$ has a closed-form vector potential in terms of the complete elliptic integrals $K(m)$ and $E(m)$, obtained by integrating the Biot–Savart law around the loop.</p>
+<div class="eq">$$A_\varphi = \frac{\mu_0 I}{\pi k}\sqrt{\frac{a}{r}}\left[\Big(1-\frac{k^2}{2}\Big)K - E\right], \qquad k^2 = \frac{4ar}{(a+r)^2+(z-z_0)^2}. \label{eq:aphi}$$</div>
+<p lang="th">รูปที่ <a href="#fig5">5</a> คำนวณ $E_\varphi$ สองทาง ทางแรกใช้สมการ \eqref{eq:aphi} ทางที่สองอินทิเกรต $B_z$ เชิงตัวเลขตามสมการ \eqref{eq:flux} แล้วใช้สมการ \eqref{eq:faraday} ถ้าการคำนวณถูก สองเส้นต้องทับกัน</p>
+<p lang="en">Figure <a href="#fig5">5</a> computes $E_\varphi$ in two ways, from Eq. \eqref{eq:aphi} and by integrating $B_z$ numerically with Eq. \eqref{eq:flux} and then applying Eq. \eqref{eq:faraday}. If the calculation is right the two curves coincide.</p>
+<figure id="fig3">
+  <div class="figctl">
+    <label><input type="checkbox" id="showB" checked> B</label><label><input type="checkbox" id="showE" checked> E</label><label><input type="checkbox" id="showF" checked> F</label>
+    <label><input type="checkbox" id="showGlobe" checked> <span lang="th">ลูกแก้ว</span><span lang="en">globe</span></label><label><input type="checkbox" id="cut"> <span lang="th">ผ่าครึ่ง</span><span lang="en">cut away</span></label><label><input type="checkbox" id="spin" checked> <span lang="th">เฟส RF เคลื่อนที่</span><span lang="en">advance RF phase</span></label>
+  </div>
+  <div class="frame"><div id="three" aria-label="3D field view, drag to rotate"></div></div>
+  <figcaption><b>Figure 3.</b> <span lang="th">สนามสามมิติ ลากเพื่อหมุน เลื่อนล้อหรือบีบเพื่อซูม ลูกศรน้ำเงินคือ $\mathbf B$ สีเขียวคือ $\mathbf E$ เหนี่ยวนำ (แสดงเฉพาะในลูกแก้ว) ทั้งสองเป็นค่าทันทีที่เฟส RF ปัจจุบัน ลูกศรส้มคือความหนาแน่นแรงเฉลี่ยตามเวลา $\langle\mathbf f\rangle$ ในวงแหวนพลาสมา ความยาวลูกศรเป็นสัดส่วนกับ log ของขนาด</span><span lang="en">Three-dimensional field; drag to rotate, scroll or pinch to zoom. Blue arrows are $\mathbf B$, green arrows the induced $\mathbf E$ (shown inside the globe only), both instantaneous at the current RF phase. Orange arrows are the time-averaged force density $\langle\mathbf f\rangle$ in the plasma ring. Arrow length follows the log of the magnitude.</span></figcaption>
+</figure>
+<figure id="fig4">
+  <div class="figctl">
+    <label for="xsq"><span lang="th">ปริมาณ</span><span lang="en">Quantity</span></label><select id="xsq"><option value="B">|B| rms</option><option value="E">|E| rms</option><option value="F">|f|</option></select>
+    <label for="xsp"><span lang="th">ระนาบ</span><span lang="en">Plane</span></label><select id="xsp"><option value="rz">r–z</option><option value="xy">x–y</option></select>
+    <label for="xsz">z</label><input id="xsz" type="range" min="-40" max="120" value="8"><output id="xszv">8 mm</output>
+  </div>
+  <div class="frame"><canvas id="xsec" height="440" data-ar="0.6" data-min="230" data-max="460" aria-label="cross section map"></canvas></div>
+  <figcaption><b>Figure 4.</b> <span lang="th">ภาพตัดขวาง สเกลสีเป็น log วงกลมเส้นบางคือผิวลูกแก้ว สี่เหลี่ยมสีทองแดงคือคอยล์สองชั้น วงกลมม่วงคือหน้าตัดวงแหวนพลาสมา ในระนาบ r–z เส้นสั้นบอกทิศของ $\mathbf B$ ที่เฟสปัจจุบัน</span><span lang="en">Cross sections on a log colour scale. The thin circle is the glass, the copper rectangles the two coil layers, the violet circles the plasma ring cross section. In the r–z plane the short strokes give the direction of $\mathbf B$ at the current phase.</span></figcaption>
+</figure>
+<figure id="fig5">
+  <div class="frame"><canvas id="cvFar" height="250" data-ar="0.36" data-min="200" data-max="260"></canvas></div>
+  <figcaption><b>Figure 5.</b> <span lang="th">$E_\varphi$ rms ที่ความสูงเหนือวงแหวนเล็กน้อย เส้นทึบจากสมการ \eqref{eq:aphi} เส้นประจากอินทิกรัลในสมการ \eqref{eq:flux} เส้นแนวตั้งคือรัศมีวงแหวน</span><span lang="en">$E_\varphi$ rms just above the ring. The solid line is Eq. \eqref{eq:aphi}, the dashed line the integral of Eq. \eqref{eq:flux}, and the vertical line marks the ring radius.</span></figcaption>
+</figure>
+
+<h3 id="s42"><span class="sn">4.2</span><span lang="th">คอยล์และพลาสมาในฐานะหม้อแปลง</span><span lang="en">Coil and plasma as a transformer</span></h3>
+<p lang="th">Piel อธิบาย ICP ว่าเป็นหม้อแปลงที่มีพลาสมาเป็นขดทุติยภูมิรอบเดียว และในโหมด H กระแสพลาสมาไหลสวนทางกับกระแสคอยล์ <a class="cite" data-ref="piel" data-sec="11.3" data-page="391">[1, pp. 391–394]</a> ในรูปเฟสเซอร์</p>
+<p lang="en">Piel describes the ICP as a transformer with the plasma as a one-turn secondary, and in H mode the plasma current flows opposite to the coil current <a class="cite" data-ref="piel" data-sec="11.3" data-page="391">[1, pp. 391–394]</a>. In phasor form,</p>
+<div class="eq">$$V_1 = (R_c + j\omega L_1) I_1 + j\omega M I_p, \qquad 0 = (R_p + j\omega L_p) I_p + j\omega M I_1, \label{eq:tx}$$</div>
+<div class="eq">$$I_p = \frac{-j\omega M}{R_p + j\omega L_p}\, I_1, \qquad Z_{ref} = \frac{\omega^2 M^2}{R_p + j\omega L_p}, \qquad P_p = \tfrac12 |I_1|^2\, \mathrm{Re}\,Z_{ref}. \label{eq:zref}$$</div>
+<p lang="th">ที่จุดทำงานปัจจุบัน $\omega M$ = <span class="v" data-k="wM"></span>, $R_p$ = <span class="v" data-k="Rp"></span>, $\omega L_p$ = <span class="v" data-k="wLp"></span> ทำให้ $\mathrm{Re}\,Z_{ref}$ = <span class="v" data-k="Rref"></span> เทียบกับความต้านทานคอยล์ $R_c$ = <span class="v" data-k="Rc"></span> ประสิทธิภาพการส่งกำลังจากคอยล์เข้าพลาสมา $\eta_c = \mathrm{Re}Z_{ref}/(\mathrm{Re}Z_{ref}+R_c)$ = <span class="v" data-k="etac"></span></p>
+<p lang="en">At the present operating point $\omega M$ = <span class="v" data-k="wM"></span>, $R_p$ = <span class="v" data-k="Rp"></span> and $\omega L_p$ = <span class="v" data-k="wLp"></span>, so $\mathrm{Re}\,Z_{ref}$ = <span class="v" data-k="Rref"></span> against a coil resistance $R_c$ = <span class="v" data-k="Rc"></span>. The fraction of coil power delivered to the plasma, $\eta_c = \mathrm{Re}Z_{ref}/(\mathrm{Re}Z_{ref}+R_c)$, is <span class="v" data-k="etac"></span>.</p>
+
+<h3 id="s43"><span class="sn">4.3</span><span lang="th">สภาพนำไฟฟ้าและ skin depth</span><span lang="en">Conductivity and skin depth</span></h3>
+<p lang="th">สภาพนำไฟฟ้าของพลาสมาที่แตกตัวน้อยมาจาก Piel Eq. (4.31) <a class="cite" data-ref="piel" data-eq="4.31" data-page="85">[1, Eq. (4.31)]</a> และความลึกผิวแบบมีการชนมาจาก Eq. (11.47) <a class="cite" data-ref="piel" data-eq="11.47" data-page="393">[1, Eq. (11.47)]</a> ซึ่งรูปทั่วไปด้านขวาลดรูปเป็นสมการนั้นเมื่อ $\nu_m \gg \omega$</p>
+<p lang="en">The conductivity of a weakly ionised plasma is Piel's Eq. (4.31) <a class="cite" data-ref="piel" data-eq="4.31" data-page="85">[1, Eq. (4.31)]</a> and the collisional skin depth is Eq. (11.47) <a class="cite" data-ref="piel" data-eq="11.47" data-page="393">[1, Eq. (11.47)]</a>; the general form below reduces to it when $\nu_m \gg \omega$.</p>
+<div class="eq">$$\sigma = \frac{n_e e^2}{m_e \nu_m}, \qquad \delta = \sqrt{\frac{2}{\omega\mu_0\sigma}}\sqrt{1+\frac{\omega^2}{\nu_m^2}}, \qquad R_p = \frac{2\pi R}{\sigma A_{eff}}. \label{eq:sigma}$$</div>
+<p lang="th">ที่ 15 torr ความถี่การชน $\nu_m$ = <span class="v" data-k="nu"></span> สูงกว่า $\omega$ = <span class="v" data-k="w"></span> มาก ได้ $\sigma$ = <span class="v" data-k="sig"></span> และ $\delta$ = <span class="v" data-k="delta"></span> ซึ่งใหญ่กว่ารัศมีหน้าตัดวงแหวน กระแสจึงกระจายทั่วหน้าตัด</p>
+<p lang="en">At 15 torr the collision frequency $\nu_m$ = <span class="v" data-k="nu"></span> is far above $\omega$ = <span class="v" data-k="w"></span>, giving $\sigma$ = <span class="v" data-k="sig"></span> and $\delta$ = <span class="v" data-k="delta"></span>, larger than the ring's minor radius, so the current fills the whole cross section.</p>
+
+<h2 id="s5"><span class="sn">5</span><span lang="th">แรงบนพลาสมา</span><span lang="en">Forces on the plasma</span></h2>
+<p lang="th">ความหนาแน่นแรงลอเรนซ์และค่าเฉลี่ยตามเวลาของแรงรวมบนวงแหวน ซึ่งได้จากการหาอนุพันธ์ของพลังงานร่วม $W = M I_1 I_p$ ตามตำแหน่ง คือ</p>
+<p lang="en">The Lorentz force density, and the time-averaged net force on the ring obtained by differentiating the mutual energy $W = M I_1 I_p$ with respect to position, are</p>
+<div class="eq">$$\mathbf f = \mathbf J\times\mathbf B, \qquad \langle \mathbf f\rangle = \tfrac12\,\mathrm{Re}\big(\mathbf J\times\mathbf B^*\big), \qquad \langle F_z\rangle = \tfrac12\,\mathrm{Re}\big(I_p I_1^*\big)\,\frac{\partial M}{\partial z}. \label{eq:force}$$</div>
+<p lang="th">ค่าปัจจุบัน $\partial M/\partial z$ = <span class="v" data-k="dMdz"></span> ได้ $\langle F_z\rangle$ = <span class="v" data-k="Fz"></span> และแรงแนวรัศมี <span class="v" data-k="FR"></span> แรงยกอยู่ในระดับไมโครนิวตัน เพราะกระแสพลาสมาไหลสวนทางกับคอยล์ แรงจึงผลักขึ้น แต่แรงนี้ส่งต่อให้แก๊สผ่านการชน ตำแหน่งของวงแหวนจึงถูกกำหนดหลักๆ ด้วยบริเวณที่ $E_\varphi$ แรงพอจะไอออไนซ์และการพาความร้อนของแก๊ส ไม่ใช่การลอยด้วยแรงแม่เหล็ก</p>
+<p lang="en">Now $\partial M/\partial z$ = <span class="v" data-k="dMdz"></span>, giving $\langle F_z\rangle$ = <span class="v" data-k="Fz"></span> and a radial force of <span class="v" data-k="FR"></span>. The lift is of order micronewtons. Because the plasma current opposes the coil current the force pushes upward, but it is passed to the gas through collisions. The ring's position is therefore set mainly by where $E_\varphi$ is strong enough to ionise and by gas convection, not by magnetic levitation.</p>
+<p lang="th">อัตราส่วนความดันพลาสมาต่อความดันแม่เหล็ก</p>
+<p lang="en">The ratio of plasma pressure to magnetic pressure is</p>
+<div class="eq">$$\beta = \frac{n_e k_B T_e}{B^2/2\mu_0}. \label{eq:beta}$$</div>
+<p lang="th">ในโทคาแมคอย่าง JET มีค่าราวร้อยละ 1–2 คือสนามแม่เหล็กกักพลาสมาไว้ได้ (Piel อธิบายโทคาแมคว่าเป็นหม้อแปลงขนาดใหญ่เช่นกัน <a class="cite" data-ref="piel" data-sec="3.6.1" data-page="64">[1, p. 64]</a>) ของเราได้ $\beta$ = <span class="v" data-k="beta"></span> สนามแม่เหล็กอ่อนเกินจะกักพลาสมา ตัวกักจริงคือผนังแก้วและแก๊สความดันสูง</p>
+<p lang="en">In a tokamak such as JET it is about 1–2 %, meaning the magnetic field confines the plasma (Piel also describes the tokamak as a large transformer <a class="cite" data-ref="piel" data-sec="3.6.1" data-page="64">[1, p. 64]</a>). Here $\beta$ = <span class="v" data-k="beta"></span>, so the magnetic field is far too weak to confine anything, and the glass wall and the dense gas do the confining.</p>
+<div><p class="tcap"><b>Table 3.</b> <span lang="th">ค่าสนามและแรงที่ตำแหน่งวงแหวน</span><span lang="en">Field and force at the ring</span></p><table class="bt" id="fieldtab"></table></div>
+
+<h2 id="s6"><span class="sn">6</span><span lang="th">ผิวโดนัท ระบบพิกัดและแคลคูลัสบนผิว</span><span lang="en">The donut surface, its coordinates and surface calculus</span></h2>
+<h3 id="s61"><span class="sn">6.1</span><span lang="th">ใช้ระบบพิกัดแบบไหน</span><span lang="en">Which coordinate system</span></h3>
+<p lang="th">คำตอบสั้นคือใช้สามระบบซ้อนกัน แต่ละระบบมีหน้าที่ของตัวเอง การคำนวณสนามทั้งหมดในเอกสารนี้ใช้ <b>พิกัดทรงกระบอก</b> $(r,\varphi,z)$ ซึ่งก็คือพิกัดเชิงขั้ว (polar) $(r,\varphi)$ ในระนาบแนวนอนบวกความสูง $z$ เหตุผลคือคอยล์ ลูกแก้ว และวงแหวนสมมาตรรอบแกน สนามจึงไม่ขึ้นกับ $\varphi$ ปัญหาสามมิติเหลือแค่สองมิติในระนาบ $r$–$z$ ส่วน <b>พิกัดฉาก</b> (rectangular) $(x,y,z)$ ใช้เพื่อวาดภาพ 3D และเพื่อหาผลคูณไขว้ ส่วนบนผิวโดนัทใช้ <b>พิกัดทอรอยด์</b> คือมุมรอบวงใหญ่ $\varphi$ (toroidal) กับมุมรอบหน้าตัด $\theta$ (poloidal) แบบเดียวกับรูป JET</p>
+<p lang="en">The short answer is three nested systems, each with its own job. All field calculations here use <b>cylindrical coordinates</b> $(r,\varphi,z)$, which are plane <b>polar</b> coordinates $(r,\varphi)$ plus a height $z$. The coil, globe and ring are symmetric about the axis, so nothing depends on $\varphi$ and the three-dimensional problem collapses to two dimensions in the $r$–$z$ plane. <b>Rectangular</b> (Cartesian) coordinates $(x,y,z)$ are used only to draw in 3D and to evaluate cross products. On the donut itself we use <b>toroidal coordinates</b>, the angle $\varphi$ around the large circle (toroidal) and the angle $\theta$ around the cross section (poloidal), the same pair as in the JET picture.</p>
+<div class="eq">$$x = r\cos\varphi,\quad y = r\sin\varphi,\qquad \hat{\mathbf r} = \cos\varphi\,\hat{\mathbf x} + \sin\varphi\,\hat{\mathbf y},\quad \hat{\boldsymbol\varphi} = -\sin\varphi\,\hat{\mathbf x} + \cos\varphi\,\hat{\mathbf y}. \label{eq:cyl}$$</div>
+<p lang="th">ข้อสำคัญคือเวกเตอร์หน่วย $\hat{\mathbf r}$ และ $\hat{\boldsymbol\varphi}$ หมุนไปตามจุด ต่างจาก $\hat{\mathbf x}$ และ $\hat{\mathbf y}$ ที่คงที่ เมื่อหาอนุพันธ์จึงต้องใช้ $\partial\hat{\mathbf r}/\partial\varphi = \hat{\boldsymbol\varphi}$ และ $\partial\hat{\boldsymbol\varphi}/\partial\varphi = -\hat{\mathbf r}$ รูปที่ <a href="#fig6">6</a> ให้เลือกจุดบนผิวแล้วดูเวกเตอร์หน่วยของทั้งสามระบบพร้อมกัน</p>
+<p lang="en">The key point is that $\hat{\mathbf r}$ and $\hat{\boldsymbol\varphi}$ rotate from point to point while $\hat{\mathbf x}$ and $\hat{\mathbf y}$ stay fixed, so derivatives need $\partial\hat{\mathbf r}/\partial\varphi = \hat{\boldsymbol\varphi}$ and $\partial\hat{\boldsymbol\varphi}/\partial\varphi = -\hat{\mathbf r}$. Figure <a href="#fig6">6</a> lets you pick a point on the surface and see the unit vectors of all three systems together.</p>
+
+<h3 id="s62"><span class="sn">6.2</span><span lang="th">สมการของผิวโดนัท</span><span lang="en">Equation of the donut surface</span></h3>
+<p lang="th">ผิวของวงแหวนรัศมีใหญ่ $R_0$ รัศมีหน้าตัด $a$ ที่ความสูง $z_0$ เขียนเป็นฟังก์ชันของสองมุม โดเมนของพารามิเตอร์ $(\theta,\varphi)\in[0,2\pi)\times[0,2\pi)$ เป็นสี่เหลี่ยมผืนผ้า ดังนั้นโดนัทคือสี่เหลี่ยมที่ม้วนสองทิศ (รูปที่ <a href="#fig7">7</a>)</p>
+<p lang="en">The surface of a ring with major radius $R_0$, minor radius $a$ and height $z_0$ is a function of two angles. The parameter domain $(\theta,\varphi)\in[0,2\pi)\times[0,2\pi)$ is a rectangle, so the donut is a rectangle rolled up in both directions (Figure <a href="#fig7">7</a>).</p>
+<div class="eq">$$\mathbf x(\theta,\varphi) = \big((R_0 + a\cos\theta)\cos\varphi,\; (R_0 + a\cos\theta)\sin\varphi,\; z_0 + a\sin\theta\big). \label{eq:torus}$$</div>
+<p lang="th">อนุพันธ์ย่อยให้เวกเตอร์สัมผัสสองทิศ ผลคูณไขว้ให้เวกเตอร์ตั้งฉากและพื้นที่ผิวย่อย</p>
+<p lang="en">The partial derivatives give the two tangent vectors, and their cross product gives the normal and the surface element.</p>
+<div class="eq">$$\begin{gathered}\frac{\partial\mathbf x}{\partial\theta} = a\,\hat{\boldsymbol\theta},\quad \frac{\partial\mathbf x}{\partial\varphi} = (R_0 + a\cos\theta)\,\hat{\boldsymbol\varphi},\\ \hat{\mathbf n} = \cos\theta\,\hat{\mathbf r} + \sin\theta\,\hat{\mathbf z},\qquad dA = \Big|\frac{\partial\mathbf x}{\partial\theta}\times\frac{\partial\mathbf x}{\partial\varphi}\Big|\,d\theta\,d\varphi = a(R_0 + a\cos\theta)\,d\theta\,d\varphi.\end{gathered} \label{eq:dA}$$</div>
+<div class="eq">$$\begin{gathered}A = \int_0^{2\pi}\!\!\int_0^{2\pi} a(R_0 + a\cos\theta)\,d\theta\,d\varphi = 4\pi^2 R_0 a,\\ V = \int_0^{a}\!\!\int_0^{2\pi}\!\!\int_0^{2\pi} \rho\,(R_0 + \rho\cos\theta)\,d\varphi\,d\theta\,d\rho = 2\pi^2 R_0 a^2.\end{gathered} \label{eq:area}$$</div>
+<p lang="th">เทอม $a\cos\theta$ หายไปเมื่ออินทิเกรตรอบ $\theta$ เพราะด้านนอกของโดนัท ($\theta = 0$) กว้างกว่าด้านใน ($\theta = \pi$) พอดีกันจนหักล้าง ผลจึงเท่ากับทฤษฎีบทของ Pappus ที่วงแหวนปัจจุบัน $A$ = <span class="v" data-k="tA"></span> (อินทิกรัลเชิงตัวเลขได้ <span class="v" data-k="tAnum"></span>) และ $V$ = <span class="v" data-k="tV"></span></p>
+<p lang="en">The $a\cos\theta$ term integrates to zero over $\theta$ because the outer side of the donut ($\theta = 0$) is wider than the inner side ($\theta = \pi$) by exactly as much, which reproduces Pappus's theorem. For the present ring $A$ = <span class="v" data-k="tA"></span> (the numerical double integral gives <span class="v" data-k="tAnum"></span>) and $V$ = <span class="v" data-k="tV"></span>.</p>
+
+<h3 id="s63"><span class="sn">6.3</span><span lang="th">กระแส สนาม และแรงไหลบนผิวอย่างไร</span><span lang="en">How current, field and force run over the surface</span></h3>
+<p lang="th"><b>กระแส</b> ไหลตามทิศ $\hat{\boldsymbol\varphi}$ รอบวงใหญ่ เป็นวงปิดตามสมการ \eqref{eq:faraday} จึงไม่มีจุดเริ่มต้นหรือจุดจบ และกลับทิศทุกครึ่งรอบของ RF (ทุก <span class="v" data-k="halfT"></span>) จุดที่ "เริ่ม" จริงมีครั้งเดียวคือตอนจุดชนวน (S1) ลวดจุดชนวนปล่อยอิเล็กตรอนตั้งต้นที่มุม $\varphi$ เดียวบนผิวแก้ว จากนั้น $E_\varphi$ เร่งอิเล็กตรอนวิ่งรอบ $\varphi$ จนการแตกตัวลุกลามจนวงปิด</p>
+<p lang="en"><b>Current</b> runs along $\hat{\boldsymbol\varphi}$ around the large circle. By Eq. \eqref{eq:faraday} it is a closed loop with no beginning or end, and it reverses every half RF period (every <span class="v" data-k="halfT"></span>). The one real "start" happens at strike (S1), when the fly-wire seeds electrons at a single angle $\varphi$ on the glass, $E_\varphi$ then accelerates them around $\varphi$, and the avalanche spreads until the ring closes.</p>
+<p lang="th"><b>สนามของกระแสพลาสมาเอง</b> พันรอบหน้าตัดในทิศ $\hat{\boldsymbol\theta}$ (poloidal) ตั้งฉากกับกระแส บนผิวมีค่า $B_\theta(a) = \mu_0 I_p/2\pi a$ = <span class="v" data-k="tBth"></span> ผลคูณ $\mathbf J\times\mathbf B_\theta$ ชี้เข้าหาแกนของหน้าตัด เรียกว่า pinch แต่ความดันแม่เหล็ก $B_\theta^2/2\mu_0$ = <span class="v" data-k="tpB"></span> เล็กกว่าความดันแก๊ส 2000 Pa หลายล้านเท่า</p>
+<p lang="en"><b>The plasma's own field</b> wraps around the cross section along $\hat{\boldsymbol\theta}$ (poloidal), perpendicular to the current, with $B_\theta(a) = \mu_0 I_p/2\pi a$ = <span class="v" data-k="tBth"></span> at the surface. $\mathbf J\times\mathbf B_\theta$ points toward the axis of the cross section, the pinch, but the magnetic pressure $B_\theta^2/2\mu_0$ = <span class="v" data-k="tpB"></span> is millions of times below the 2000 Pa gas pressure.</p>
+<p lang="th">ในโทคาแมคยังมีสนามในทิศ $\varphi$ จากขดลวดรอบโดนัท เส้นสนามจึงเป็นเกลียวตามค่า $q$ ในรูป JET ของเราไม่มีสนาม $B_\varphi$ เลย เพราะคอยล์สร้างได้แค่ $B_r$ และ $B_z$ เส้นสนามบนผิวจึงเป็นวงกลมรอบหน้าตัด ไม่ใช่เกลียว ($q = aB_\varphi/R_0B_\theta = 0$)</p>
+<p lang="en">A tokamak also has a toroidal field $B_\varphi$ from coils wound around the donut, so its field lines are helices with a safety factor $q$, as in the JET picture. Here $B_\varphi = 0$, because a flat coil can only make $B_r$ and $B_z$, so field lines on the surface are plain circles around the cross section, not helices ($q = aB_\varphi/R_0B_\theta = 0$).</p>
+<p lang="th"><b>แรงจากสนามของคอยล์</b> แยกเป็นองค์ประกอบตั้งฉากผิวและตามผิว</p>
+<p lang="en"><b>The force from the coil's field</b> splits into a normal and a tangential component on the surface</p>
+<div class="eq">$$f_n = \langle\mathbf f\rangle\cdot\hat{\mathbf n} = \tfrac12\mathrm{Re}\big[J_\varphi\,(B_z^*\cos\theta - B_r^*\sin\theta)\big], \qquad f_\theta = \langle\mathbf f\rangle\cdot\hat{\boldsymbol\theta} = -\tfrac12\mathrm{Re}\big[J_\varphi\,(B_z^*\sin\theta + B_r^*\cos\theta)\big]. \label{eq:fsurf}$$</div>
+<p lang="th">รูปที่ <a href="#fig8">8</a> แสดงว่าแรงไม่ได้กระจายสม่ำเสมอ ด้านที่หันเข้าหาคอยล์ (มุม $\theta$ ประมาณ <span class="v" data-k="tThMax"></span>) ถูกผลักแรงที่สุด แล้วแรงลดลงเมื่อวนรอบหน้าตัดไปด้านตรงข้าม ผลรวมของแรงทั้งวงคืออินทิกรัลเชิงปริมาตร $\mathbf F = \int_V \langle\mathbf f\rangle\,dV$ ได้ $F_z$ = <span class="v" data-k="tFz"></span> เทียบกับ <span class="v" data-k="Fz"></span> จากสมการ \eqref{eq:force} ซึ่งคิดวงแหวนเป็นเส้นบาง สองค่าต่างกันเพราะหน้าตัดมีขนาดจริง</p>
+<p lang="en">Figure <a href="#fig8">8</a> shows the force is far from uniform. The side facing the coil (near $\theta \approx$ <span class="v" data-k="tThMax"></span>) is pushed hardest, and the push fades as you go round the cross section to the far side. The total force is the volume integral $\mathbf F = \int_V \langle\mathbf f\rangle\,dV$, which gives $F_z$ = <span class="v" data-k="tFz"></span> against <span class="v" data-k="Fz"></span> from Eq. \eqref{eq:force}, where the ring is a thin filament; the difference comes from the finite cross section.</p>
+<figure id="fig6">
+  <div class="figctl">
+    <label for="dq"><span lang="th">สีบนผิว</span><span lang="en">Surface colour</span></label><select id="dq"><option value="fn">f<sub>n</sub></option><option value="ft">f<sub>θ</sub></option><option value="Bc">|B| coil</option></select>
+    <label for="dsys"><span lang="th">เวกเตอร์หน่วย</span><span lang="en">Unit vectors</span></label><select id="dsys"><option value="all">all</option><option value="xyz">x y z</option><option value="cyl">r φ z</option><option value="tor">n θ φ</option></select>
+    <label>θ <input id="dth" type="range" min="0" max="360" value="320"><output id="dthv" class="v">320°</output></label><label>φ <input id="dph" type="range" min="0" max="360" value="40"><output id="dphv" class="v">40°</output></label>
+    <label><input type="checkbox" id="dflow" checked> <span lang="th">เส้นกระแสและสนาม</span><span lang="en">current and field lines</span></label>
+  </div>
+  <div class="frame"><div id="donut" aria-label="3D donut surface, drag to rotate"></div></div>
+  <figcaption><b>Figure 6.</b> <span lang="th">ผิวโดนัทของวงแหวนพลาสมาบนคอยล์ สีคือแรงจากสนามคอยล์ตามสมการ \eqref{eq:fsurf} สีแดงคือดึงออก สีน้ำเงินคือกดเข้า เส้นส้มที่มีจุดวิ่งคือกระแสในทิศ $\varphi$ เส้นน้ำเงินคือสนามของพลาสมาเองในทิศ $\theta$ ที่จุดที่เลือก ลูกศรแสดงเวกเตอร์หน่วย สีดำ $\hat{\mathbf x},\hat{\mathbf y},\hat{\mathbf z}$ เขียว $\hat{\mathbf r},\hat{\boldsymbol\varphi}$ ม่วง $\hat{\mathbf n},\hat{\boldsymbol\theta}$</span><span lang="en">The donut surface of the plasma ring above the coil, coloured by the coil-field force of Eq. \eqref{eq:fsurf}. Red pulls outward and blue presses inward. Orange lines with moving dots are the current along $\varphi$; blue lines are the plasma's own field along $\theta$. At the selected point, arrows show the unit vectors, black $\hat{\mathbf x},\hat{\mathbf y},\hat{\mathbf z}$, green $\hat{\mathbf r},\hat{\boldsymbol\varphi}$, violet $\hat{\mathbf n},\hat{\boldsymbol\theta}$.</span></figcaption>
+</figure>
+<figure id="fig7">
+  <div class="frame"><canvas id="cvUnwrap" height="260" data-ar="0.42" data-min="220" data-max="320"></canvas></div>
+  <figcaption><b>Figure 7.</b> <span lang="th">ผิวโดนัทที่คลี่ออกเป็นสี่เหลี่ยมในโดเมน $(\varphi,\theta)$ ขอบซ้ายต่อกับขอบขวา ขอบบนต่อกับขอบล่าง เส้นแนวนอนคือกระแส (วิ่งตาม $\varphi$) เส้นแนวตั้งคือสนามของพลาสมา (วิ่งตาม $\theta$) สีคือ $f_n$ ซึ่งไม่ขึ้นกับ $\varphi$ เพราะสมมาตรรอบแกน จึงเป็นแถบแนวนอน</span><span lang="en">The donut unrolled into the rectangle $(\varphi,\theta)$. The left edge joins the right, the top joins the bottom. Horizontal lines are the current (running in $\varphi$), vertical lines the plasma's own field (running in $\theta$). The colour is $f_n$, which does not depend on $\varphi$ because of the axial symmetry, so it forms horizontal bands.</span></figcaption>
+</figure>
+<figure id="fig8">
+  <div class="frame"><canvas id="cvFth" height="250" data-ar="0.36" data-min="200" data-max="260"></canvas></div>
+  <figcaption><b>Figure 8.</b> <span lang="th">แรงต่อปริมาตรบนผิวเทียบกับมุมรอบหน้าตัด $\theta$ ($0^\circ$ คือด้านนอกสุด $90^\circ$ คือด้านบน $180^\circ$ คือด้านใน) เส้นทึบ $f_n$ เส้นประ $f_\theta$ เส้นแนวตั้งคือทิศที่หันเข้าหาคอยล์</span><span lang="en">Force density on the surface against the poloidal angle $\theta$ ($0^\circ$ outermost, $90^\circ$ top, $180^\circ$ innermost). The solid line is $f_n$, the dashed line $f_\theta$, and the vertical line marks the direction toward the coil.</span></figcaption>
+</figure>
+
+<h3 id="s64"><span class="sn">6.4</span><span lang="th">ฟลักซ์แสงผ่านผิวแก้ว</span><span lang="en">Light flux through the glass surface</span></h3>
+<p lang="th">แสงที่วงแหวนแผ่ออกมาต้องผ่านผิวลูกแก้วทั้งหมด ทฤษฎีบทไดเวอร์เจนซ์บอกว่าผลรวมฟลักซ์ผ่านผิวปิดเท่ากับกำลังที่แหล่งกำเนิดข้างในปล่อยออกมา ความเข้มแสงที่ตกบนผิวแก้ว (irradiance) ที่มุม $\alpha$ จากขั้วบนคืออินทิกรัลรอบวงแหวน</p>
+<p lang="en">All light from the ring has to cross the glass. The divergence theorem says the total flux through a closed surface equals the power of the source inside. The irradiance on the glass at a polar angle $\alpha$ from the top is an integral around the ring</p>
+<div class="eq">$$\begin{gathered}\oint_{\text{glass}} \mathbf S\cdot d\mathbf A = \int_V \nabla\cdot\mathbf S\,dV = P_{rad},\\ E(\alpha) = \int_0^{2\pi} \frac{P_{rad}}{2\pi}\,\frac{\cos\gamma}{4\pi d^2}\,d\varphi', \qquad \int_0^{\pi} E(\alpha)\,2\pi R_g^2\sin\alpha\,d\alpha = P_{rad}.\end{gathered} \label{eq:glass}$$</div>
+<p lang="th">โดย $d$ คือระยะจากจุดบนวงแหวนถึงจุดบนแก้ว และ $\gamma$ คือมุมตกกระทบ รูปที่ <a href="#fig9">9</a> ให้ $E(\alpha)$ สำหรับแสงทั้งหมดที่ออกจากพลาสมา อินทิกรัลรอบผิวแก้วตรวจได้ <span class="v" data-k="gTot"></span> เทียบกับ $P_{rad}$ = <span class="v" data-k="gP"></span> แถบที่สว่างที่สุดอยู่ที่ $\alpha \approx$ <span class="v" data-k="gPeak"></span> ซึ่งเป็นทิศของวงแหวน ตรงนั้นแก้วอยู่ห่างพลาสมาเพียง <span class="v" data-k="gDist"></span> และส่วนล่างของแก้วสว่างกว่าส่วนบนประมาณ <span class="v" data-k="gRatio"></span> เท่า แต่แถบนี้อยู่ระดับเดียวกับคอยล์และ PCB ซึ่งแบบจำลองยังไม่ได้คิดเงา</p>
+<p lang="en">Here $d$ is the distance from a point on the ring to a point on the glass and $\gamma$ the angle of incidence. Figure <a href="#fig9">9</a> gives $E(\alpha)$ for all light leaving the plasma. Integrating it over the glass returns <span class="v" data-k="gTot"></span> against $P_{rad}$ = <span class="v" data-k="gP"></span>. The brightest band is at $\alpha \approx$ <span class="v" data-k="gPeak"></span>, the direction of the ring, where the glass is only <span class="v" data-k="gDist"></span> from the plasma, and the lower glass is about <span class="v" data-k="gRatio"></span> times brighter than the top. That band sits level with the coil and the PCB, whose shadow the model does not include yet.</p>
+<figure id="fig9">
+  <div class="frame"><canvas id="cvGlass" height="250" data-ar="0.36" data-min="200" data-max="260"></canvas></div>
+  <figcaption><b>Figure 9.</b> <span lang="th">ความเข้มแสงบนผิวแก้วเทียบกับมุม $\alpha$ จากขั้วบน ($0^\circ$ บนสุด $180^\circ$ ล่างสุด) คำนวณจากสมการ \eqref{eq:glass} ไม่รวมเงาของ PCB และคอยล์</span><span lang="en">Irradiance on the glass against the angle $\alpha$ from the top pole ($0^\circ$ top, $180^\circ$ bottom), from Eq. \eqref{eq:glass}, without the shadow of the PCB and coil.</span></figcaption>
+</figure>
+
+<h2 id="s7"><span class="sn">7</span><span lang="th">กฎอนุรักษ์พลังงาน</span><span lang="en">Conservation of energy</span></h2>
+<p lang="th">ทฤษฎีบทของพอยน์ติงเชื่อมการไหลของพลังงานในสนามกับงานที่ทำต่อกระแส เมื่อใช้กับวงจรรวมได้สมการสมดุลพลังงานในรูปอนุพันธ์และอินทิกรัล</p>
+<p lang="en">Poynting's theorem links the energy flow in the field to the work done on currents. Applied to the lumped circuit it gives the energy balance in differential and integral form</p>
+<div class="eq">$$-\frac{\partial u}{\partial t} = \nabla\cdot\mathbf S + \mathbf J\cdot\mathbf E \quad\Longrightarrow\quad \frac{dW}{dt} = P_{in}(t) - \sum_k P_k(t), \label{eq:poynting}$$</div>
+<div class="eq">$$W = \tfrac12 L_2 I_{L2}^2 + \tfrac12 L_1 I_1^2 + M I_1 I_p + \tfrac12 L_p I_p^2 + \tfrac12 C_{oss}V_d^2 + \tfrac12 C_b V_{C_b}^2 + \tfrac12 C_g V_g^2, \label{eq:stored}$$</div>
+<div class="eq">$$\int_0^T P_{in}\,dt = \big[W(T)-W(0)\big] + \sum_k \int_0^T P_k\,dt. \label{eq:integral}$$</div>
+<p lang="th">โปรแกรมอินทิเกรตทุกเทอมด้วยกฎสี่เหลี่ยมคางหมูตลอดการจำลอง ส่วนต่างที่เหลือคือ <span class="v" data-k="res"></span> จากพลังงานเข้าทั้งหมด <span class="v" data-k="Ein"></span></p>
+<p lang="en">Every term is integrated with the trapezoidal rule over the whole run. The residual is <span class="v" data-k="res"></span> out of <span class="v" data-k="Ein"></span> of input energy.</p>
+<figure id="fig10">
+  <div class="frame"><canvas id="cvEn" height="250" data-ar="0.36" data-min="200" data-max="260"></canvas></div>
+  <figcaption><b>Figure 10.</b> <span lang="th">ด้านซ้ายของสมการ \eqref{eq:integral} หลังหักการสูญเสีย (เส้นทึบ) เทียบกับพลังงานสะสม $W(t)-W(t_0)$ (เส้นประ) ในช่วงสุดท้ายของการจำลอง สองเส้นทับกันแปลว่าไม่มีพลังงานหายไปจากการคำนวณ</span><span lang="en">The left side of Eq. \eqref{eq:integral} minus the losses (solid) against the stored energy $W(t)-W(t_0)$ (dashed) over the end of the run. The curves coincide, so no energy is lost by the calculation.</span></figcaption>
+</figure>
+
+<h2 id="s8"><span class="sn">8</span><span lang="th">แบบจำลองพลาสมาศูนย์มิติ</span><span lang="en">Zero-dimensional plasma model</span></h2>
+<p lang="th">อัตราการชนแต่ละชนิดคืออินทิกรัลของภาคตัดขวางคูณความเร็ว บนการกระจายพลังงานแบบ Maxwell</p>
+<p lang="en">Each collision rate is an integral of cross section times speed over a Maxwellian energy distribution</p>
+<div class="eq">$$K(T_e) = \int_0^\infty \sigma(\varepsilon)\,v(\varepsilon)\,f(\varepsilon)\,d\varepsilon, \qquad f(\varepsilon) = \frac{2}{\sqrt\pi}\,\frac{\sqrt{\varepsilon}}{T_e^{3/2}}\,e^{-\varepsilon/T_e}, \qquad v = \sqrt{\frac{2e\varepsilon}{m_e}}. \label{eq:rate}$$</div>
+<p lang="th">สมดุลอนุภาค (อัตราการไอออไนซ์เท่ากับอัตราที่ประจุแพร่ไปหายที่ผนัง) กำหนด $T_e$ และสมดุลกำลังกำหนด $n_e$ ตามโครงสร้างสมการเดียวกับ Dietz และคณะ <a class="cite" data-ref="dietz">[2]</a></p>
+<p lang="en">Particle balance (ionisation equals diffusion loss to the wall) fixes $T_e$, and power balance fixes $n_e$, with the same structure as Dietz et al. <a class="cite" data-ref="dietz">[2]</a></p>
+<div class="eq">$$n_g K_{iz}(T_e) = \left(\frac{\Lambda^2}{D_a} + \frac{V}{A\,u_B}\right)^{-1}, \qquad P_{abs} = e\, n_e n_g K_{iz} V\, \varepsilon_T, \label{eq:balance}$$</div>
+<div class="eq">$$\varepsilon_T = \underbrace{E_{iz}}_{\text{ionization}} + \underbrace{E_{ex}\frac{K_{ex}}{K_{iz}}}_{\text{excitation}} + \underbrace{3\frac{m_e}{M}(T_e-T_g)\frac{K_m}{K_{iz}}}_{\text{elastic}} + \underbrace{2T_e + \varepsilon_i}_{\text{wall}}. \label{eq:epsT}$$</div>
+<p lang="th">ค่าปัจจุบัน $T_e$ = <span class="v" data-k="Te"></span>, $n_e$ = <span class="v" data-k="ne"></span>, $\varepsilon_T$ = <span class="v" data-k="epsT"></span> ต่อคู่อิเล็กตรอนไอออน ในจำนวนนี้เป็นพลังงานกระตุ้นอะตอม <span class="v" data-k="epsEx"></span> พลังงานส่วนใหญ่ของพลาสมาจึงออกไปเป็นแสงหรือความร้อนจากอะตอมที่ถูกกระตุ้น</p>
+<p lang="en">Now $T_e$ = <span class="v" data-k="Te"></span>, $n_e$ = <span class="v" data-k="ne"></span> and $\varepsilon_T$ = <span class="v" data-k="epsT"></span> per electron-ion pair, of which <span class="v" data-k="epsEx"></span> is atomic excitation. Most of the plasma's energy therefore leaves as light, or as heat from excited atoms.</p>
+<figure id="fig11">
+  <div class="figctl"><label for="teS">T<sub>e</sub></label><input id="teS" type="range" min="0.4" max="4" step="0.02" value="0.7"><span class="v" id="teV" style="white-space:normal"></span></div>
+  <div class="frame"><canvas id="cvK" height="260" data-ar="0.36" data-min="200" data-max="260"></canvas></div>
+  <figcaption><b>Figure 11.</b> <span lang="th">แคลคูลัสของสมการ \eqref{eq:rate} เส้นน้ำเงินคือ $f(\varepsilon)$ เส้นแดงและม่วงคือภาคตัดขวางการไอออไนซ์และการกระตุ้น พื้นที่แรเงาคือ $\sigma v f$ ซึ่งพื้นที่ใต้กราฟเท่ากับ $K$ ลาก $T_e$ เพื่อดูว่าหาง Maxwell เพียงเล็กน้อยที่เกิน 12.13 eV เป็นตัวกำหนดอัตราการไอออไนซ์ แต่ละเส้นใช้สเกลของตัวเอง</span><span lang="en">The calculus of Eq. \eqref{eq:rate}. Blue is $f(\varepsilon)$, red and violet are the ionisation and excitation cross sections, and the shaded area under $\sigma v f$ equals $K$. Drag $T_e$ to see that the thin Maxwellian tail above 12.13 eV sets the ionisation rate. Each curve has its own scale.</span></figcaption>
+</figure>
+<p class="note" lang="th">ภาคตัดขวางการไอออไนซ์ใช้สูตรของ Lotz <a class="cite" data-ref="lotz">[3]</a> การกระตุ้นรวมระดับ 6s และ 6p เป็นก้อนเดียว momentum transfer ใช้รูปร่างโดยประมาณของข้อมูลชุด Biagi และ Hayashi ซึ่งมี Ramsauer minimum ใกล้ 0.6 eV จึงใช้ได้ในระดับลำดับขนาด แบบจำลองนี้ไม่รวมการไอออไนซ์สองขั้นผ่านสถานะ metastable ซึ่งสำคัญที่ 15 torr ค่า $T_e$ จริงจึงอาจสูงกว่าที่คำนวณ</p>
+<p class="note" lang="en">Ionisation uses the Lotz formula <a class="cite" data-ref="lotz">[3]</a>; excitation lumps the 6s and 6p levels; momentum transfer follows the approximate shape of the Biagi and Hayashi data with its Ramsauer minimum near 0.6 eV, so the model is good to an order of magnitude. It leaves out two-step ionisation through metastable states, which matters at 15 torr, so the real $T_e$ may be higher.</p>
+
+<h2 id="s9"><span class="sn">9</span><span lang="th">สมดุลพลังงานจากปลั๊กถึงแสง</span><span lang="en">Energy balance from plug to light</span></h2>
+<p lang="th">ประสิทธิภาพที่สนใจคือสัดส่วนของกำลังไฟฟ้าที่กลายเป็นแสงที่ตามองเห็นได้ และความสว่างต่อวัตต์</p>
+<p lang="en">The efficiencies of interest are the share of electrical power that becomes visible light, and the luminous flux per watt.</p>
+<div class="eq">$$\eta_{vis} = \frac{P_{vis,out}}{P_{wall}}, \qquad \Phi_v = 683\ \tfrac{\text{lm}}{\text{W}} \int V(\lambda)\, P_\lambda\, d\lambda \approx 683\,\bar V\, P_{vis,out}. \label{eq:eta}$$</div>
+<figure id="fig12">
+  <div class="frame scrollx"><svg id="sankey" viewBox="0 0 980 470" style="width:100%;height:auto;display:block" role="img" aria-label="energy flow"></svg></div>
+  <p class="swipe"><span lang="th">ปัดซ้ายขวาเพื่อดูแผนภาพทั้งหมด</span><span lang="en">Swipe sideways to see the whole diagram</span></p>
+  <figcaption><b>Figure 12.</b> <span lang="th">เส้นทางพลังงาน ความกว้างของแถบเป็นสัดส่วนกับกำลัง ผลรวมของปลายทางทุกเส้นเท่ากับกำลังจากแหล่งจ่ายตามสมการ \eqref{eq:integral} แถบสีส้มเป็นความร้อน สีม่วงคือพลาสมา สีแดงคือ NIR สีเหลืองคือแสงที่ตามองเห็น</span><span lang="en">Energy flow; band width is proportional to power, and the end points sum to the supply power, as Eq. \eqref{eq:integral} requires. Orange is heat, violet the plasma, red near infrared, yellow visible light.</span></figcaption>
+</figure>
+<div class="twocol">
+  <div><p class="tcap"><b>Table 4.</b> <span lang="th">ปลายทางของพลังงาน</span><span lang="en">Where the energy goes</span></p><table class="bt" id="ledger"></table></div>
+  <div><p class="tcap"><b>Table 5.</b> <span lang="th">ประสิทธิภาพ</span><span lang="en">Efficiencies</span></p><table class="bt" id="effs"></table>
+  <p class="note" style="margin-top:0.8em"><span lang="th">การแบ่งพลังงานกระตุ้นเป็น VUV, NIR และแสงที่มองเห็น รวมทั้งค่า $\bar V$ เป็นสมมติฐาน ค่าจริงต้องวัดด้วย photodiode ในโดมและสเปกโตรมิเตอร์ (หัวข้อ 10)</span><span lang="en">The split of excitation energy into VUV, NIR and visible light, and $\bar V$, are assumptions; the real values need the photodiode in the dome and the spectrometer (Section 10).</span></p></div>
+</div>
+
+<h2 id="s10"><span class="sn">10</span><span lang="th">การทดลองที่จะวัดค่าเหล่านี้</span><span lang="en">Experiments that will measure these quantities</span></h2>
+<p class="tcap"><b>Table 6.</b> <span lang="th">การทดลองสี่ชุด ขั้นที่วัด และสิ่งที่แบบจำลองทำนาย</span><span lang="en">The four experiments, the stage each one uses, and the model's prediction</span></p>
+<div class="scrollx"><table class="bt" id="exptab" style="min-width:520px"></table></div>
+<h3 id="s101"><span class="sn">10.1</span><span lang="th">วัดความหนาแน่นพลาสมาด้วยวิทยุ</span><span lang="en">Plasma density from a radio</span></h3>
+<p lang="th">เมื่อเกิดพลาสมา ความเหนี่ยวนำที่วงจรเห็นลดลงตามสมการ \eqref{eq:zref} ความถี่จึงขยับขึ้น</p>
+<p lang="en">When the plasma forms, the inductance the circuit sees drops as Eq. \eqref{eq:zref} says, so the frequency rises</p>
+<div class="eq">$$L_{eff} = L_1 - \frac{\omega^2 M^2 L_p}{R_p^2 + \omega^2 L_p^2}, \qquad \frac{\Delta f}{f} \approx -\frac{\Delta L}{2 L_1}. \label{eq:df}$$</div>
+<p lang="th">แบบจำลองให้ความถี่ไม่มีพลาสมา <span class="v" data-k="foff"></span> และเมื่อมีพลาสมา <span class="v" data-k="fon"></span> ต่างกัน <span class="v" data-k="df"></span> ซึ่ง RTL SDR แยกได้สบาย ค่า $\Delta f$ ขึ้นกับ $n_e$ ผ่าน $R_p$ จึงใช้ย้อนหา $n_e$ ได้ หลังสอบเทียบด้วยวงแหวนทองแดงที่รู้ค่าความต้านทาน</p>
+<p lang="en">The model gives <span class="v" data-k="foff"></span> without plasma and <span class="v" data-k="fon"></span> with it, a shift of <span class="v" data-k="df"></span> that an RTL SDR resolves easily. Since $\Delta f$ depends on $n_e$ through $R_p$, it can be inverted for $n_e$ after calibrating with a copper ring of known resistance.</p>
+<h3 id="s102"><span class="sn">10.2</span><span lang="th">ควบคุมความสูงวงแหวนแบบ tokamak</span><span lang="en">Tokamak-style ring height control</span></h3>
+<p lang="th">หัวข้อ 5 และ 6 แสดงว่าแรงแม่เหล็กยกวงแหวนได้แค่ไมโครนิวตัน ตัวควบคุมที่ปรับกำลังขับผ่าน digital pot แทน RV1 จึงน่าจะเลื่อนวงแหวนได้ผ่านการเปลี่ยนตำแหน่งที่ไอออไนซ์และการพาความร้อน การทดลองนี้จะตอบว่าความสัมพันธ์ระหว่างกำลังกับความสูงเป็นเชิงเส้นหรือมีฮิสเทอรีซิส <a class="cite" data-ref="turner">[4]</a></p>
+<p lang="en">Sections 5 and 6 show the magnetic lift is only micronewtons. A controller that trims drive power through a digital pot in place of RV1 will most likely move the ring by shifting where ionisation happens and how the gas convects. The experiment will show whether height follows power linearly or with hysteresis <a class="cite" data-ref="turner">[4]</a>.</p>
+<h3 id="s103"><span class="sn">10.3</span><span lang="th">เทอร์โมมิเตอร์พลาสมาจากอัตราส่วนเส้น 823/828 nm</span><span lang="en">Plasma thermometer from the 823/828 nm line ratio</span></h3>
+<p lang="th">ค่า $T_e$ ในหัวข้อ 8 เป็นค่าที่มีความไม่แน่นอนมากที่สุดของแบบจำลอง อัตราส่วนความเข้มของเส้น Xe I 823 และ 828 nm ร่วมกับแบบจำลอง collisional radiative ให้ค่า $T_e$ จากการวัด แล้วนำมาแทนค่าในสมการ \eqref{eq:epsT} เพื่อแก้การแบ่งพลังงานในรูปที่ 12</p>
+<p lang="en">$T_e$ in Section 8 is the least certain number in the model. The intensity ratio of the Xe I lines at 823 and 828 nm, read through a collisional-radiative model, gives a measured $T_e$ that can be put back into Eq. \eqref{eq:epsT} to correct the split in Figure 12.</p>
+<h3 id="s104"><span class="sn">10.4</span><span lang="th">เครื่องสุ่มเลขจากสัญญาณรบกวนของพลาสมา</span><span lang="en">Random numbers from plasma noise</span></h3>
+<p lang="th">ใช้ photodiode ในขั้น S4 ประเมิน min entropy ตาม NIST SP 800-90B และรันชุดควบคุมด้วย LED ในขั้น S0 เพื่อแยกสัญญาณรบกวนของพลาสมาออกจากสัญญาณรบกวนของวงจรวัด รูปที่ 9 บอกว่าแสงแรงที่สุดในแถบที่หันเข้าหาวงแหวน จึงควรวาง photodiode เหนือขอบ PCB เล็กน้อยในแถบนั้น</p>
+<p lang="en">Use the photodiode in S4 to estimate min-entropy per NIST SP 800-90B, with an LED control run in S0 to separate plasma noise from the noise of the measuring chain. Figure 9 shows the light is strongest on the band facing the ring, so the photodiode should sit just above the PCB edge on that band.</p>
+
+<h2 id="s11"><span class="sn">11</span><span lang="th">ข้อจำกัด</span><span lang="en">Limitations</span></h2>
+<p lang="th">ประการแรก ค่าที่ไม่มีในแผนวงจร ได้แก่ C<sub>oss</sub> ขณะใช้งาน, R ของคอยล์, V<sub>th</sub>, ภาคตัดขวาง และสัดส่วนสเปกตรัม เป็นการประมาณ ประการที่สอง C<sub>oss</sub> ถูกปรับให้กำลังเข้าใกล้ 60 W ตามโน้ต "20 V @ 3.1 A typical" บนแผนวงจร ความถี่ที่ได้จึงอยู่ราว <span class="v" data-k="f2"></span> ขณะที่ README ระบุ 12–13 MHz ค่า L100 1.9 µH บนแผนวงจรอาจไม่ใช่ค่าขณะทำงานจริง ประการที่สาม วงแหวนพลาสมาถูกแทนด้วยห่วงที่มีหน้าตัดกลมและกระแสสม่ำเสมอ การกระจาย $n_e(r,z)$ จริงต้องใช้ fluid model ประการสุดท้าย สนามไฟฟ้าแบบ capacitive จากแรงดันคอยล์ ซึ่งสำคัญในโหมด E ยังไม่ได้รวม <a class="cite" data-ref="piel" data-sec="11.3.2" data-page="393">[1, Sect. 11.3.2]</a></p>
+<p lang="en">First, quantities not on the schematic (the working C<sub>oss</sub>, the coil resistance, V<sub>th</sub>, the cross sections and the spectral split) are estimates. Second, C<sub>oss</sub> was tuned so the input power approaches 60 W, per the note "20 V @ 3.1 A typical" on the schematic; the resulting frequency is about <span class="v" data-k="f2"></span> while the README states 12–13 MHz, so the 1.9 µH printed for L100 may not be its working value. Third, the plasma ring is a loop with a round cross section and uniform current; the real $n_e(r,z)$ needs a fluid model. Finally, the capacitive electric field from the coil voltage, which matters in E mode, is not included <a class="cite" data-ref="piel" data-sec="11.3.2" data-page="393">[1, Sect. 11.3.2]</a>.</p>
+
+<h2 id="sA"><span class="sn">A</span><span lang="th">ภาคผนวก พารามิเตอร์ที่ปรับได้</span><span lang="en">Appendix, adjustable parameters</span></h2>
+<p class="note"><span lang="th">ค่าที่มีเครื่องหมาย ⟳ ต้องรันวงจรใหม่ประมาณ 2 วินาที ค่าอื่นคำนวณทันที</span><span lang="en">Values marked ⟳ need a new circuit run of about 2 s; the others update at once.</span></p>
+<div class="params" id="assump"></div>
+<p style="margin-top:1em"><button class="primary" id="rerun"><span lang="th">คำนวณจุดทำงานใหม่</span><span lang="en">Recompute operating point</span></button> <button id="reset"><span lang="th">คืนค่าเริ่มต้น</span><span lang="en">Reset defaults</span></button></p>
+
+<h2 id="sR"><span lang="th">เอกสารอ้างอิง</span><span lang="en">References</span></h2>
+<ol class="refs" id="refs">
+  <li id="ref-piel">A. Piel, <i>Plasma Physics: An Introduction to Laboratory, Space, and Fusion Plasmas</i>, 2nd ed., Springer, 2017. <a href="https://doi.org/10.1007/978-3-319-63427-2">doi:10.1007/978-3-319-63427-2</a>. Sect. 3.6.1 (p. 64), Eq. (4.31) (p. 85), Sect. 11.3 (pp. 391–395), Eq. (11.46)–(11.47) (p. 393). <a class="cite" data-ref="piel" data-page="391" data-sec="11.3"><span lang="th">เปิดหนังสือ</span><span lang="en">open the book</span></a></li>
+  <li id="ref-dietz">Dietz et al., Global models for radio-frequency ion thrusters, <i>EPJ Techniques and Instrumentation</i> 8:10, 2021. <a href="https://doi.org/10.1140/epjti/s40485-021-00068-5">doi:10.1140/epjti/s40485-021-00068-5</a></li>
+  <li id="ref-lotz">W. Lotz, An empirical formula for the electron-impact ionization cross-section, <i>Z. Phys.</i> 206, 205–211, 1967.</li>
+  <li id="ref-turner">M. M. Turner, M. A. Lieberman, Hysteresis and the E-to-H transition in radiofrequency inductive discharges, <i>Plasma Sources Sci. Technol.</i> 8, 313–324, 1999. <a href="https://doi.org/10.1088/0963-0252/8/2/312">doi:10.1088/0963-0252/8/2/312</a></li>
+  <li id="ref-sky">sky guided, plasma toroid v2.3.0, schematic toroid_unified.kicad_sch rev 2.3.0 and README. <a href="https://codeberg.org/sky-guided/sky-guided-plasma-toroid">codeberg.org/sky-guided/sky-guided-plasma-toroid</a>. CC BY-SA; Figure 1 reuses this schematic.</li>
+</ol>
+<p class="powered">© 2026 Watcharachai Leatsuriyakarn · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, adapted from the sky guided plasma toroid design<br>Powered by Claude Opus 5.5</p>
+</article>
+
+<aside class="rail right" aria-label="simulation controls"><div class="box">
+  <h4><span lang="th">การจำลอง</span><span lang="en">Simulation</span></h4>
+  <div class="ctl">
+    <div class="langsw" role="group" aria-label="language"><button id="lang-th" data-l="th">ไทย</button><button id="lang-en" data-l="en">EN</button></div>
+    <label for="stage"><span lang="th">สถานะ</span><span lang="en">State</span><select id="stage">
+      <option value="off">S0 standby</option><option value="strike">S1 strike</option><option value="E">S2 E mode</option><option value="H" selected>S3 H mode</option>
+    </select></label>
+    <div class="row2"><button id="play" class="primary"></button><button id="stepb"><span lang="th">ทีละก้าว</span><span lang="en">Step</span></button></div>
+    <div class="row2"><button id="restart"><span lang="th">เริ่มจากศูนย์</span><span lang="en">From rest</span></button><button id="copy">JSON</button></div>
+    <label for="speed"><span lang="th">ความเร็ว</span><span lang="en">Speed</span><input id="speed" type="range" min="1" max="300" value="40"></label>
+    <div class="busy" id="busy" aria-live="polite"></div>
+    <table class="mini" id="minitab"></table>
+  </div>
+</div></aside>
+</div>
+
+<div id="refcard" role="dialog" aria-modal="true" aria-labelledby="refh"><div class="card">
+  <h4 id="refh"></h4><div id="refb"></div>
+  <div class="acts" id="refa"></div>
+</div></div>
+<script src="sheet.js"></script>
+<script src="schem.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
