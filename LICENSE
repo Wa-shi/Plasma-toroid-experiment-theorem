@@ -21,6 +21,9 @@ Attribution
 
 Files derived from the original schematic: sheet.js, sheet_dark.js
 (compacted from the KiCad SVG export and toroid_unified.kicad_sch).
+Photo of the original device: docs/images/original_toroid_photo.jpg (sky guided).
+All other images in docs/images are renders and screenshots by
+Watcharachai Leatsuriyakarn.
 
 Third-party components keep their own licenses and are not covered above
   Latin Modern fonts (embedded in fonts.css)     GUST Font License
